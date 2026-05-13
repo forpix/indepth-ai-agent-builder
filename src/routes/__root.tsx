@@ -27,6 +27,14 @@ function RootShell() {
     <div className="flex h-screen flex-col bg-bg text-text">
       {/* 顶部品牌区 + Tab + 全局动作 */}
       <header className="flex h-14 shrink-0 items-center gap-6 border-b border-border bg-surface px-6">
+        <a
+          href="/"
+          title="forpix — AI Product Demos"
+          className="flex items-center gap-1 text-[12px] text-muted hover:text-text"
+        >
+          <span aria-hidden className="text-[14px] leading-none">←</span>
+          forpix
+        </a>
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-md bg-primary text-[13px] font-semibold text-primary-foreground">
             鼎
