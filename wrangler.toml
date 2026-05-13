@@ -1,0 +1,14 @@
+name = "dingjie-agent-builder"
+main = "src/worker/index.ts"
+compatibility_date = "2025-01-15"
+
+routes = [
+  { pattern = "arenaai.info/agent-builder", zone_name = "arenaai.info" },
+  { pattern = "arenaai.info/agent-builder/*", zone_name = "arenaai.info" }
+]
+
+[assets]
+directory = "./dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+run_worker_first = true

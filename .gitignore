@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-ssr
+*.local
+
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
+.idea
+
+# wrangler
+.wrangler/
+.dev.vars
+
+# auto-generated route tree
+src/routeTree.gen.ts
