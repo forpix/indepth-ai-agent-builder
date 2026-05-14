@@ -22,7 +22,7 @@
 已加载：
 ✓ CLAUDE.md
 ✓ docs/skill_builder_spec.md
-✗ docs/agent_console_spec.md（不存在，需要时会停下来询问）
+✗ docs/debug_eval_spec.md（不存在，需要时会停下来询问）
 
 当前任务理解：[一句话描述]
 计划：[3-5 个步骤]
@@ -90,10 +90,10 @@ dingjie-agent-builder/
 ├── docs/                                   # 所有详细 spec
 │   ├── skill_builder_spec_v1.md            # Tab 1 详细规范（已存在）
 │   ├── skill_builder_config_spec_v1.md     # Tab 1 配置项精修表（已存在）
-│   ├── agent_console_spec.md               # Tab 2 详细规范（待写）
+│   ├── agent_console_spec.md               # Tab 2 详细规范（已就绪 v1.1）
 │   ├── debug_eval_spec.md                  # Tab 3 详细规范（待写）
-│   ├── mock_data_schema.md                 # Mock 数据 schema（待写）
-│   └── demo_scripts.md                     # 面试演示剧本（待写）
+│   ├── mock_data_schema.md                 # Mock 数据 schema（已就绪 v1.0）
+│   └── demo_scripts.md                     # 面试演示剧本（已就绪 v1.0）
 ├── src/
 │   ├── main.tsx
 │   ├── App.tsx                     # 顶层布局 + 路由
@@ -264,14 +264,42 @@ type MaterialCriticalFilter = 'yes' | 'no' | 'any';
 
 ### Phase 2：Agent Console（第 4-5 天）
 
-- 三栏布局（对话 / 订单表 / 决策面板）
-- 3 步固定剧本
-- 详细 spec 见 `docs/agent_console_spec.md`（待写，做完 Phase 1 再写）
+详细 spec 见 [`docs/agent_console_spec.md`](docs/agent_console_spec.md) v1.1（已就绪，经 8 轮 Codex 对抗式审查）+ [`docs/mock_data_schema.md`](docs/mock_data_schema.md) v1.0（10 条订单 fixture + 规则纯函数 + 预期状态矩阵）。
+
+剧本主线已定型：**6 步复合剧本（90 秒）** —— 定时触发 → 扫单 → 安全层拦截 → 多智能体协同 → 采购员追问 → 反向调参重跑 → 一键复盘。
+
+**P0（必做，第 4 天完成）**：
+
+- 三栏布局骨架（替换 `src/routes/agent-console.tsx` 现有 placeholder）
+- 10 条 mock 订单 + 订单表（无动画版，按 `mock_data_schema.md` §2.2 完整 TS fixture）
+- 新建 `src/stores/scenario-store.ts` 实现 `scenarioConfigOverride` 覆盖机制（**不动 `skill-defaults.ts` 的 default**）
+- 对话面板（消息类型 + 流式打字，无思考链）
+- 决策面板基础版（前 3 个 section）
+- 复合剧本的 Step 1-3（手动推进）
+- 行末「待人工」按钮 + 内嵌侧栏（PD-8 不能砍）
+
+**P1（必做，第 5 天完成）**：
+
+- D3 扫描动画 / D6 多智能体协作图 / D7 浮起迷你 Skill Builder + 立刻重跑
+- 复合剧本的 Step 4-6
+- 决策面板后 3 个 section（含 D4 模型路由可视化、Token 计数）
+- D2 思考链展开
+- X1 演示模式（含伪鼠标光标 + `humanDecisionScript`）
+- X4 一键复盘
+
+**P2（如有时间）**：
+
+- 引用 Skill 悬浮卡
+- Memory 摘要的"已记入"toast 动画
+- 可选真实 LLM 接入（详见 [`docs/demo_scripts.md`](docs/demo_scripts.md) §2 —— 4 个 LLM 接入点 + Worker 端方向路由 + simple token gating + Anthropic budget cap 兜底）
+
+**绝对不要砍**：D7、PD-8 人工确认、伪光标方案——这三个是产品判断的硬约束。
 
 ### Phase 3：Debug & Eval（第 6 天）
 
 - Trace 面板 + 指标看板
 - 详细 spec 见 `docs/debug_eval_spec.md`（待写）
+- **Trace 数据契约已在** [`docs/agent_console_spec.md`](docs/agent_console_spec.md) **§10 定义完整**（discriminated union: IntentTrace / FilterTrace / RiskTrace / CallSkillTrace / HumanDecisionTrace / ConfigChangeTrace）—— Phase 3 写 spec 时只需补"Trace 面板 UI"和"指标看板字段"
 
 ### Phase 4：部署（第 7 天）
 
@@ -316,7 +344,7 @@ Debug & Eval 展示 trace 和指标
 | 1 条 | 供应商已回复确认 | 演示已处理状态 |
 | 1 条 | 供应商已回复延期 2 天（在自动同意范围） | 演示业务层自动同意 |
 
-详细字段定义见 `docs/mock_data_schema.md`（待写）。
+详细字段定义见 [`docs/mock_data_schema.md`](docs/mock_data_schema.md) v1.0（**已就绪**——含 10 条完整 TS fixture、5 个规则纯函数、每条订单按 6 步剧本的预期状态矩阵）。剧本所有数字（命中 6/10、安全层覆盖 4 条、业务层自动 1 条、调参后自动 1 条）都从该 schema 反推。
 
 ### 8.2 数据真实性
 
@@ -381,10 +409,10 @@ Debug & Eval 展示 trace 和指标
 |------|------|------|
 | `docs/skill_builder_spec_v1.md` | Tab 1 详细规范 | ✅ 已存在 |
 | `docs/skill_builder_config_spec_v1.md` | Tab 1 配置项精修表 | ✅ 已存在 |
-| `docs/agent_console_spec.md` | Tab 2 详细规范 | ⏳ 完成 Phase 1 后写 |
-| `docs/debug_eval_spec.md` | Tab 3 详细规范 | ⏳ 完成 Phase 2 后写 |
-| `docs/mock_data_schema.md` | Mock 数据字段定义 | ⏳ 第一次 mock 数据时写 |
-| `docs/demo_scripts.md` | 面试演示剧本 | ⏳ Phase 1 末尾写 |
+| `docs/agent_console_spec.md` | Tab 2 详细规范 | ✅ 已就绪 v1.1（经 8 轮 Codex 对抗式审查） |
+| `docs/debug_eval_spec.md` | Tab 3 详细规范 | ⏳ 完成 Phase 2 后写（Trace 契约已在 agent_console_spec §10 定义） |
+| `docs/mock_data_schema.md` | Mock 数据字段定义 | ✅ 已就绪 v1.0（10 条 fixture + 规则纯函数 + 预期状态矩阵） |
+| `docs/demo_scripts.md` | 面试演示剧本 + 真 LLM 增强方案 | ✅ 已就绪 v1.0（FAQ + 4 个 LLM 接入点 + 演示节奏控制） |
 
 ---
 
@@ -414,7 +442,7 @@ Banner 的工作模式偏好（基于过往会话沉淀）：
 
 ---
 
-**文档版本**：v1.0
-**最后更新**：2026-05-12
-**当前 Phase**：Phase 1 - Skill Builder 骨架
-**第一个任务**：基于本文件和 `docs/skill_builder_spec.md`，初始化项目脚手架并实现 Skill Builder 的 P0 模块
+**文档版本**：v1.1（Phase 2 spec 就绪后更新）
+**最后更新**：2026-05-14
+**当前 Phase**：Phase 1 完成 → 进入 Phase 2 - Agent Console
+**下一个任务**：基于 [`docs/agent_console_spec.md`](docs/agent_console_spec.md) v1.1 + [`docs/mock_data_schema.md`](docs/mock_data_schema.md) v1.0 实现 Agent Console 的 P0 模块（详见 §6 Phase 2）
