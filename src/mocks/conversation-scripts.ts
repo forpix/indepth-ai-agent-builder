@@ -75,11 +75,14 @@ export const CONVERSATION_SCRIPTS: ChatMessage[] = [
   },
 
   // ── Step 5 ⇒ rerun：调参生效，PO-009 自动同意 ──────────
+  // 必须 visibleAfter='rerun'：config-adjust 和 rerun 共享 step=5，否则会在 D7 卡还开着、
+  // 用户尚未确认时就提前显示"已应用"，破坏因果叙事
   {
     id: 'msg-010',
     kind: 'agent',
     text: '配置变更已应用。PO-2025-009（延期 3 天）现在落入「业务层自动同意」范围，已自动派发任务卡。',
     step: 5,
+    visibleAfter: 'rerun',
     streaming: true,
   },
 

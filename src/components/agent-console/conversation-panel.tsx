@@ -7,14 +7,37 @@ import { messagesUpToStep } from '@/mocks/conversation-scripts';
 import { useScenarioStore } from '@/stores/scenario-store';
 import { useStreamingText } from '@/hooks/use-streaming-text';
 import { isRealLlmEnabled } from '@/hooks/use-real-llm';
-import { SCENARIO_STEP_INDEX, type ChatMessage } from '@/types/agent';
+import {
+  SCENARIO_STEP_INDEX,
+  SCENARIO_STEP_ORDER,
+  type ChatMessage,
+} from '@/types/agent';
 import { cn } from '@/lib/utils';
 
 export function ConversationPanel() {
   const currentStep = useScenarioStore((s) => s.currentStep);
   const stepIndex = SCENARIO_STEP_INDEX[currentStep];
 
-  const messages = useMemo(() => messagesUpToStep(stepIndex), [stepIndex]);
+  // 二次过滤：visibleAfter 优先于 step 数字过滤。
+  // 用于 config-adjust / rerun 共享 step=5 时区分 msg-009 与 msg-010 可见时机
+  const messages = useMemo(() => {
+    const currentOrderIdx = SCENARIO_STEP_ORDER.indexOf(currentStep);
+    return messagesUpToStep(stepIndex).filter((m) => {
+      if (!m.visibleAfter) return true;
+      const minIdx = SCENARIO_STEP_ORDER.indexOf(m.visibleAfter);
+      return minIdx <= currentOrderIdx;
+    });
+  }, [stepIndex, currentStep]);
+
+  // 每个 step 内只在「最后一条 agent 消息」上显示思考链 ——
+  // 否则同 step 的多条 Agent 消息会共享同一段 CoT（msg-009 / msg-010 重复 bug）
+  const lastAgentIdPerStep = useMemo(() => {
+    const map = new Map<number, string>();
+    for (const m of messages) {
+      if (m.kind === 'agent') map.set(m.step, m.id);
+    }
+    return map;
+  }, [messages]);
 
   // 新消息进来时自动滚动到底
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -43,7 +66,15 @@ export function ConversationPanel() {
         {messages.length === 0 ? (
           <EmptyState />
         ) : (
-          messages.map((m) => <MessageRow key={m.id} message={m} />)
+          messages.map((m) => (
+            <MessageRow
+              key={m.id}
+              message={m}
+              showCot={
+                m.kind === 'agent' && lastAgentIdPerStep.get(m.step) === m.id
+              }
+            />
+          ))
         )}
       </div>
     </div>
@@ -60,7 +91,13 @@ function EmptyState() {
   );
 }
 
-function MessageRow({ message }: { message: ChatMessage }) {
+function MessageRow({
+  message,
+  showCot,
+}: {
+  message: ChatMessage;
+  showCot: boolean;
+}) {
   if (message.kind === 'system') {
     return (
       <div className="flex justify-center">
@@ -93,17 +130,25 @@ function MessageRow({ message }: { message: ChatMessage }) {
   }
 
   // agent
-  return <AgentMessage message={message} />;
+  return <AgentMessage message={message} showCot={showCot} />;
 }
 
-function AgentMessage({ message }: { message: ChatMessage }) {
+function AgentMessage({
+  message,
+  showCot,
+}: {
+  message: ChatMessage;
+  showCot: boolean;
+}) {
   const llmReplacements = useScenarioStore((s) => s.llmReplacements);
   const realLlm = isRealLlmEnabled();
 
-  // L3 替换：Step 4 PO-005 解释（msg-007）；real 模式下等 LLM 返回再开始渲染
+  // L3 替换：Step 4 PO-005 解释（msg-007）；real 模式下等 LLM 返回再开始渲染。
+  // 失败时 store 会 set l3FellBack=true → 不再等待，直接用 mock text
   const isL3Target = message.id === 'msg-007';
   const l3Replacement = llmReplacements.answerExplanation?.text;
-  const waitingForL3 = realLlm && isL3Target && !l3Replacement;
+  const l3FellBack = llmReplacements.l3FellBack === true;
+  const waitingForL3 = realLlm && isL3Target && !l3Replacement && !l3FellBack;
   // ⚠️ effectiveText 必须用 isL3Target gate —— 否则 L3 输出会污染所有 Agent 消息
   const effectiveText =
     isL3Target && l3Replacement ? l3Replacement : message.text;
@@ -151,7 +196,7 @@ function AgentMessage({ message }: { message: ChatMessage }) {
           )}
         </div>
 
-        {isComplete && cotLines && (
+        {isComplete && showCot && cotLines && (
           <>
             <button
               type="button"

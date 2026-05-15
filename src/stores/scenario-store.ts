@@ -165,6 +165,11 @@ interface ScenarioState {
       reason?: string;
       explanation: string;
     };
+    /**
+     * L3 已尝试且失败/超时（前端用于终结"waitingForL3"等待态，msg-007 回退到 mock）。
+     * 不靠 `answerExplanation === undefined` 区分"未调用"和"调用失败"。
+     */
+    l3FellBack?: boolean;
   };
   /** real 模式上次 LLM 失败原因（toast 提示用，1.8s 自动清空） */
   llmLastError: string | null;
@@ -285,15 +290,50 @@ export const useScenarioStore = create<ScenarioState>((set, get) => ({
       case 'scanning':
         transitionToSafetyBlock();
         return;
-      case 'safety-block':
-        set({ currentStep: 'user-question' });
-        // L3：Step 4 进入时 fire 真 LLM 解释 PO-005 追问
+      case 'safety-block': {
+        // Step 4 进入：写 IntentTrace 记录用户的自然语言追问（"PO-005 怎么没自动同意？"）
+        // —— 让 Debug Tab Step 4 不再空白，且能在 trace 里看到 NL → 意图分类的中间产物
+        const { traces, startedAt } = get();
+        const newTraces: TraceLog[] = [
+          ...traces,
+          {
+            ...RBAC_MOCK,
+            id: makeTraceId(traces),
+            type: 'intent',
+            step: 4,
+            timestamp: startedAt ? Date.now() - startedAt : 0,
+            modelUsed: 'deepseek-v3',
+            tokenUsed: 84,
+            latencyMs: 320,
+            input: {
+              triggerSource: 'nl',
+              payload: 'PO-005 怎么没自动同意？供应商都回复延期才 1 天了。',
+            },
+            output: {
+              intent: 'explainRulePriority(target=PO-2025-005)',
+              confidence: 0.93,
+            },
+          },
+        ];
+        set({ currentStep: 'user-question', traces: newTraces });
+        // L3：fire 真 LLM 解释 PO-005 追问（异步，trace 上面已经写过用户意图）
         fireL3AnswerQuestion();
         return;
+      }
       case 'user-question':
-        set({ currentStep: 'config-adjust', showD7Card: true });
-        // L4：Step 5 D7 卡浮起时 fire 真 LLM 解析"调到 3 天"意图
+        set({ currentStep: 'config-adjust' });
+        // L4：进入 Step 5 时 fire 真 LLM 解析"调到 3 天"意图
         fireL4ParseConfigIntent();
+        // D7 卡延迟 ~2.2s 浮起 —— 给 msg-009「我帮你打开配置卡片」时间 streaming
+        // 完成，让"Agent 先说话再开卡"的因果顺序清晰
+        {
+          const t = window.setTimeout(() => {
+            if (useScenarioStore.getState().currentStep === 'config-adjust') {
+              useScenarioStore.setState({ showD7Card: true });
+            }
+          }, 2200);
+          set((s) => ({ playbackTimers: [...s.playbackTimers, t] }));
+        }
         return;
       case 'config-adjust':
         // 跳过 D7（用户选择不调参） → 直接 rerun（不应用任何 override）
@@ -565,10 +605,22 @@ export const useScenarioStore = create<ScenarioState>((set, get) => ({
     schedule(46000, () => useScenarioStore.getState().applyThisRunOverride(3, false));
 
     // Step 5 → 6 done
-    schedule(50000, () => useScenarioStore.getState().next());
+    // 用显式 setState 而不是 next()：next() 内部 switch 依赖 currentStep，若中途状态被
+    // 任何路径搅动（如 next() 被提前手动调过），rerun→done 这步可能被跳过/绕过
+    schedule(50000, () =>
+      useScenarioStore.setState((s) =>
+        s.currentStep === 'idle' ? {} : { currentStep: 'done' as const },
+      ),
+    );
 
-    // Step 6 高亮 一键复盘按钮（不自动打开 modal，让用户最后点）
-    schedule(52000, () => useScenarioStore.setState({ isAutoPlaying: false }));
+    // Step 6 高亮 一键复盘按钮 + 兜底再 force 一次 done（防 t=50s 因任何原因没生效）
+    schedule(52000, () =>
+      useScenarioStore.setState((s) => ({
+        isAutoPlaying: false,
+        currentStep:
+          s.currentStep === 'idle' ? s.currentStep : ('done' as const),
+      })),
+    );
 
     set({ playbackTimers: timers });
   },
@@ -886,7 +938,10 @@ function fireL3AnswerQuestion() {
     })
     .catch((e: unknown) => {
       const msg = e instanceof LlmFetchError ? e.reason : 'unknown';
-      useScenarioStore.getState().setLlmError(`L3 失败：${msg}（已 fallback mock）`);
+      const s = useScenarioStore.getState();
+      s.setLlmError(`L3 失败：${msg}（已 fallback mock）`);
+      // 关键：标记 L3 已结束（哪怕失败），否则 msg-007 卡在"正在调用真 LLM..."
+      s.applyLlmReplacement({ l3FellBack: true });
     });
 }
 

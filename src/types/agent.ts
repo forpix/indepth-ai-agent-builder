@@ -28,6 +28,18 @@ export const SCENARIO_STEP_INDEX: Record<ScenarioStep, number> = {
   done: 6,
 };
 
+// 细粒度状态顺序（区分 config-adjust 和 rerun）—— 用于 ChatMessage.visibleAfter 比较
+export const SCENARIO_STEP_ORDER: readonly ScenarioStep[] = [
+  'idle',
+  'trigger',
+  'scanning',
+  'safety-block',
+  'user-question',
+  'config-adjust',
+  'rerun',
+  'done',
+];
+
 // ─── 剧本级配置覆盖（mock_data_schema §5） ────────────
 // 启动时计算一次，运行期间只读。剧本期间所有规则判断用
 // effectiveConfig = defaultSkillConfig deep-merge scenarioConfigOverride。
@@ -193,8 +205,14 @@ export interface ChatMessage {
   icon?: 'clock' | 'bolt';
   /** 实际渲染文本；流式打字效果在组件层做 */
   text: string;
-  /** 关联到具体 step（用于推进时按 step 选择消息） */
+  /** 关联到具体 step（用于推进时按 step 选择消息 + CoT 查找） */
   step: number;
+  /**
+   * 可选：精确指定"最早可见 ScenarioStep"。
+   * 例：msg-010 step=5 但只在 'rerun' 之后才出现（因为 config-adjust 和 rerun 共享 step=5，
+   *     不显式声明的话会在 D7 卡还开着时就提前显示"配置变更已应用"）。
+   */
+  visibleAfter?: ScenarioStep;
   /** 该消息是否需要打字效果（系统/用户/引用为 instant，agent 用打字） */
   streaming?: boolean;
 }
