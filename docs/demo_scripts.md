@@ -1,24 +1,24 @@
-# 面试演示备弹手册 v1.0
+# 项目演示备弹手册 v1.0
 
-> 用途：面试现场被追问时的标准答案 + 可选真实 LLM 增强方案的工程蓝图 + 演示节奏控制策略。
-> 目标读者：Banner（候选人本人）/ Claude Code（实现 §2 真 LLM 接入时的工程指引）。
+> 用途：演示现场被追问时的标准答案 + 可选真实 LLM 增强方案的工程蓝图 + 演示节奏控制策略。
+> 目标读者：Maintainer（项目作者）/ Claude Code（实现 §2 真 LLM 接入时的工程指引）。
 > 关联文档：`docs/agent_console_spec.md`（功能规范）、`docs/mock_data_schema.md`（数据契约）。
 
 ---
 
 ## 0. 文档定位
 
-本文档解决 Codex 对抗式审查的 P1-8：**Demo 全 mock，"Agent 推理 / 多智能体协同" 的叙事在技术派面试官面前站不住脚**。
+本文档解决 Codex 对抗式审查的 P1-8：**Demo 全 mock，"Agent 推理 / 多智能体协同" 的叙事在技术派评审者面前站不住脚**。
 
 三个章节各自承担：
 
 | 章节 | 解决什么 | 适用场景 |
 |------|---------|---------|
-| §1 FAQ 备弹 | 业务派 / 产品派面试官的追问 | 不用切真实模式，口头讲清楚即可 |
-| §2 渐进式真实 LLM 方案 | 技术派面试官的实质质疑 | 现场切 `?real-llm=<simple-token>`（书签触发），让 DevTools 里出现真 API 请求 |
-| §3 演示节奏控制 | 何时讲、何时切、何时停 | 通用，所有面试 |
+| §1 FAQ 备弹 | 业务派 / 产品派评审者的追问 | 不用切真实模式，口头讲清楚即可 |
+| §2 渐进式真实 LLM 方案 | 技术派评审者的实质质疑 | 现场切 `?real-llm=<simple-token>`（书签触发），让 DevTools 里出现真 API 请求 |
+| §3 演示节奏控制 | 何时讲、何时切、何时停 | 通用，所有演示 |
 
-**核心战略**：默认演示模式跑 mock 版（稳定，给业务派看），技术派追问时切真实 LLM 模式（DevTools 可验证）。这一招比"加 FAQ"杀伤力大得多——**让"Agent"在面试官的电脑上当场跑一次**。
+**核心战略**：默认演示模式跑 mock 版（稳定，给业务派看），技术派追问时切真实 LLM 模式（DevTools 可验证）。这一招比"加 FAQ"杀伤力大得多——**让"Agent"在评审者的电脑上当场跑一次**。
 
 ---
 
@@ -80,7 +80,7 @@
 
 **标答**（45 秒）：
 
-> 这是产品定位的核心判断。鼎捷的商业模式是**平台 + ISV 生态**，不是直销给最终用户。鼎捷 Indepth AI 平台的客户分两层：
+> 这是产品定位的核心判断。B 端 SaaS 平台的商业模式是**平台 + ISV 生态**，不是直销给最终用户。B 端 AI Agent 平台的客户分两层：
 >
 > - **直接客户**：ISV 开发者 + 业务顾问——他们用这个平台搭 Agent 卖给制造企业
 > - **间接受益人**：终端制造企业的采购员
@@ -95,7 +95,7 @@
 
 **标答**（60 秒，最重要的问题）：
 
-> 我没有制造业从业经验，但我有 **B 端关键词匹配演进到 Agent 架构** 的实战经验，这是我应聘鼎捷的核心可迁移能力。
+> 我没有制造业从业经验，但我有 **B 端关键词匹配演进到 Agent 架构** 的实战经验，这是我应聘 B 端 AI PM 岗位的核心可迁移能力。
 >
 > 满帮 IM 早期是关键词匹配的客服路由系统——司机发"运费多少"，关键词命中"运费"，路由到运费咨询客服。这套系统的天花板我在 2023 年触到了：
 >
@@ -127,7 +127,7 @@
 > - **Skill**：一组业务规则 + 触发条件 + 动作配置的封装。例如"采购交期跟催 Skill"。Skill 是可配置的，由 ISV 在 Skill Builder 上搭建。
 > - **Agent**：一个能在运行时**编排 Skills 和 Tools**、维持 Memory、自然语言交互的智能体。Agent 不是配置出来的，是平台底座提供的运行时能力。
 >
-> 三者关系：**Agent 调用 Skill，Skill 调用 Tool**。这一层级关系是鼎捷 Indepth AI + Commander 2.0 + MACP 协议的产品骨架。
+> 三者关系：**Agent 调用 Skill，Skill 调用 Tool**。这一层级关系是 B 端 AI Agent 平台、多智能体协同协议的产品骨架。
 >
 > 我的 demo 里：
 > - "齐套预警 Skill" 是 Skill 不是 Tool（它有自己的业务规则）
@@ -140,7 +140,7 @@
 
 ### 2.1 方案总览
 
-**目标**：让 4 个关键决策点真接 LLM，其余保持 mock。技术派面试官追问时切到真实模式，DevTools 里出现真 API 请求。
+**目标**：让 4 个关键决策点真接 LLM，其余保持 mock。技术派评审者追问时切到真实模式，DevTools 里出现真 API 请求。
 
 **4 个真 LLM 接入点**：
 
@@ -486,7 +486,7 @@ async function handleL4Response(llmResponse: L4Response, effective: SkillConfig)
 
 ### 2.3 部署架构（简化版）
 
-**设计原则**：成本控制移到 Anthropic 平台层（dashboard 设月度 budget cap），应用层只做**基础访问控制 + 输入约束 + LLM 输出校验**。早期版本曾设计 HMAC session token + DO 配额计数等加固机制——但 Banner 选择"在 Anthropic 平台设月度 budget $5"作为最后防线后，应用层的复杂配额机制变得过度设计。
+**设计原则**：成本控制移到 Anthropic 平台层（dashboard 设月度 budget cap），应用层只做**基础访问控制 + 输入约束 + LLM 输出校验**。早期版本曾设计 HMAC session token + DO 配额计数等加固机制——但 Maintainer 选择"在 Anthropic 平台设月度 budget $5"作为最后防线后，应用层的复杂配额机制变得过度设计。
 
 ```
 ┌──────────────┐         ┌─────────────────────────┐       ┌──────────────┐
@@ -503,7 +503,7 @@ async function handleL4Response(llmResponse: L4Response, effective: SkillConfig)
                                    │
                                    ├─→ secret: ANTHROPIC_API_KEY
                                    └─→ secret: REAL_LLM_GATE_TOKEN
-                                       （Banner 用 wrangler secret put 生成
+                                       （Maintainer 用 wrangler secret put 生成
                                         random string，演示后可重置）
 
                                                        ┌─────────────────────┐
@@ -525,10 +525,10 @@ POST /api/llm/parse-config-intent → L4
 **关键工程细节（5 条）**：
 
 1. **Simple Token 校验**
-   - URL 参数 `?real-llm=<random-string>`，token 是 Banner 用 `wrangler secret put REAL_LLM_GATE_TOKEN` 生成的 32 字节 url-safe random string
+   - URL 参数 `?real-llm=<random-string>`，token 是 Maintainer 用 `wrangler secret put REAL_LLM_GATE_TOKEN` 生成的 32 字节 url-safe random string
    - Worker 端简单 `equals` 校验：`requestToken === env.REAL_LLM_GATE_TOKEN` 才放行
    - 不需要 HMAC、不需要 exp、不需要签名工具链——简化路线
-   - **吊销机制**：Banner 在演示后直接 `wrangler secret put REAL_LLM_GATE_TOKEN` 重新生成 secret，旧 token 立刻失效
+   - **吊销机制**：Maintainer 在演示后直接 `wrangler secret put REAL_LLM_GATE_TOKEN` 重新生成 secret，旧 token 立刻失效
    - **boolean 值显式拒绝**：`?real-llm=true` 不等于任何 random string，自然被拒——前端解析 URL 参数时也加 guard，避免误用
 
    #### ⚠️ 已识别的可接受风险（Codex 6-C2 + 8-C1 反复指出）
@@ -550,7 +550,7 @@ POST /api/llm/parse-config-intent → L4
    - **应用层加固代价不对等**：用 Authorization header + 服务端 session 能彻底解决泄露问题，但 demo 工程量增加（启动多一步本地手动输入 token），与"省 ¥35"不对等
    - **生产 SaaS 必须改造**：如本 demo 升级为多租户 SaaS，必须切到 Authorization header + 短期 server-issued session + 显式吊销；当前 URL token 模式禁止上生产
 
-   **面试时被追问的话术**：
+   **演示时被追问的话术**：
 
    > "Codex 反复指出 URL token 易泄露——我两轮评估后维持现状，因为外部系统（Anthropic budget cap）已经把损失硬性 cap 在 ¥35/月以内，应用层做加固是过度设计。这是平台 PM 视角的风险定价：用 ¥35 的最坏损失换 demo 工程量收益。如果是生产 SaaS 我会切 Authorization header，但 demo 阶段这个权衡成立。"
 
@@ -561,7 +561,7 @@ POST /api/llm/parse-config-intent → L4
    - 任何 Trace 日志写出 actorId/tenantId 时**不能**附带 raw token——只能写"token 校验结果"（如 `'granted-mock'`）
 
 2. **Origin 精确校验**（不依赖 CORS）
-   - Worker 主动检查请求头 `Origin` 必须**精确匹配** Banner 的 demo 域名（如 `https://agent-builder.banner.workers.dev`）
+   - Worker 主动检查请求头 `Origin` 必须**精确匹配** Maintainer 的 demo 域名（如 `https://agent-builder.banner.workers.dev`）
    - **拒绝** `*.workers.dev` 通配——防止 attacker 在自己的 workers.dev subdomain 上代理
    - CORS 仍要正确配置防浏览器误用，但访问控制靠 Origin 主动校验
 
@@ -674,7 +674,7 @@ POST /api/llm/parse-config-intent → L4
 
 **为什么不做应用层配额计数**：
 
-成本控制最可靠的层是 Anthropic 平台 dashboard。Anthropic 提供月度 budget cap——达到后自动停服（API 返回 429）。这是平台级硬约束，比 CF Workers KV/DO 计数都可靠（KV 不原子、DO 工程量大且 spec 反复迭代仍有边界 case）。**应用层做配额计数是过度设计**——Banner 设置 `$5/月` budget cap 后：
+成本控制最可靠的层是 Anthropic 平台 dashboard。Anthropic 提供月度 budget cap——达到后自动停服（API 返回 429）。这是平台级硬约束，比 CF Workers KV/DO 计数都可靠（KV 不原子、DO 工程量大且 spec 反复迭代仍有边界 case）。**应用层做配额计数是过度设计**——Maintainer 设置 `$5/月` budget cap 后：
 
 - 单次完整剧本约 2500 token ≈ ¥0.028 ≈ $0.004
 - $5 月预算 = 约 1250 次完整剧本演练，**约 50× 安全裕量**
@@ -699,17 +699,17 @@ POST /api/llm/parse-config-intent → L4
 
 **全周期预算**：
 
-- 面试前演练 100 次：¥2.8
-- 面试当场跑 5 次：¥0.14
+- 演示前演练 100 次：¥2.8
+- 演示当场跑 5 次：¥0.14
 - **总成本约 ¥3**——完全可承受
 
 **防刷预算（简化方案，靠 Anthropic 平台层兜底）**：
 
-- Banner 在 Anthropic 平台 dashboard（console.anthropic.com）设置**月度 budget cap = $5**（约 ¥35）
+- Maintainer 在 Anthropic 平台 dashboard（console.anthropic.com）设置**月度 budget cap = $5**（约 ¥35）
 - 单次完整剧本 ≈ ¥0.028，$5 月预算允许约 **1,250 次完整剧本演练**——约 50× 安全裕量
 - **最坏情况**（token 泄露被全网攻击者刷）：单月封顶损失 ≈ ¥35
 - 一旦达到 budget cap，Anthropic API 自动返回 429 → Worker 转 503 → 前端 fallback mock
-- 触发后演示**自动降级**，Banner 讲述话术："这正好演示一下兜底机制——API budget 用尽自动降级"
+- 触发后演示**自动降级**，Maintainer 讲述话术："这正好演示一下兜底机制——API budget 用尽自动降级"
 - **简化的代价**：相比 4-C3 加固版（应用层 DO 配额），单日颗粒度的硬上限失去——但月度 budget cap 是更可靠的真实硬约束（平台层 vs 应用层）
 
 ### 2.5 真 LLM 模式 vs Mock 模式的差异处理
@@ -756,13 +756,13 @@ POST /api/llm/parse-config-intent → L4
 
 ---
 
-## 3. 面试演示节奏控制
+## 3. 项目演示节奏控制
 
-### 3.1 默认开场流程（适合所有面试官）
+### 3.1 默认开场流程（适合所有评审者）
 
 | 阶段 | 时长 | 你做什么 | 说什么 |
 |------|------|---------|--------|
-| 1. 项目介绍 | 30s | 不操作，口头介绍 | "鼎捷 Indepth AI 平台上一个采购协同 Agent 工作台的产品原型，从产品判断到工程实现都是我做的" |
+| 1. 项目介绍 | 30s | 不操作，口头介绍 | "B 端 AI Agent 平台上一个采购协同 Agent 工作台的产品原型，从产品判断到工程实现都是我做的" |
 | 2. 三 Tab 总览 | 20s | 鼠标依次悬停三个 Tab | "Skill Builder 是 ISV 配置位，Agent Console 是运行时演示，Debug & Eval 是评测复盘" |
 | 3. Skill Builder 速览 | 60s | 切到 Skill Builder，依次点 触发/筛选/自动化边界 | 重点讲三态选择、三层固定优先级、冲突预警 |
 | 4. ⭐ Agent Console 演示模式 | 90s | 切到 Agent Console，点「演示模式」 | 不要在 90 秒里持续解说，让画面自己讲。剩余时间留给观众的眼睛 |
@@ -771,7 +771,7 @@ POST /api/llm/parse-config-intent → L4
 
 ### 3.2 何时切真实 LLM 模式
 
-**信号**：面试官说出以下任意一句话——
+**信号**：评审者说出以下任意一句话——
 
 - "这是真的 LLM 调用吗？"
 - "Token 是写死的吗？"
@@ -783,7 +783,7 @@ POST /api/llm/parse-config-intent → L4
 1. 点击**事先准备好的浏览器书签**（指向 `?real-llm=<simple-token>`，token 是 `wrangler secret REAL_LLM_GATE_TOKEN` 的当前值，见 §2.3 第 1 条）。不要现场敲 URL。演示后可通过 `wrangler secret put REAL_LLM_GATE_TOKEN` 立刻吊销旧 token。
 2. F12 打开 DevTools 的 Network 面板
 3. 重新点「演示模式」
-4. 让面试官看到 4 次 `POST /api/llm/*` 请求 + 真实 response
+4. 让评审者看到 4 次 `POST /api/llm/*` 请求 + 真实 response
 
 **话术**：
 
@@ -798,7 +798,7 @@ POST /api/llm/parse-config-intent → L4
 | Token 校验失败（401） | UI 自动 fallback mock + 顶部 banner 提示。话术："token 失效了，我现场重新生成一个"（用 `wrangler secret put REAL_LLM_GATE_TOKEN`，需要新书签——演示中遇到不推荐折腾，直接降级讲述更优） |
 | **Anthropic 月度 budget 用尽**（429 → 503） | UI 自动 fallback mock + 顶部 banner 提示"API budget 已用尽，已自动切换为 mock 模式"。话术："这正好演示一下兜底机制——Anthropic 平台层的月度 budget cap 是最后防线，超额自动停服。这套设计在生产 SaaS 上也是同样思路" |
 | 演示模式动画卡死 | 点「重置」（依靠 §11.1.1 状态机契约 B2）。话术："我重置一下" |
-| 面试官追问超出剧本范围 | 切到手动模式，停在某一步说"我点开这条 trace 看看" | 
+| 评审者追问超出剧本范围 | 切到手动模式，停在某一步说"我点开这条 trace 看看" | 
 
 ### 3.4 关键原则
 
@@ -819,12 +819,12 @@ POST /api/llm/parse-config-intent → L4
 
 **待补**（不阻塞当前 Phase 1/2）：
 
-- §1 FAQ 还可以加 Q7-Q10（如"配置项之间冲突你怎么处理"、"鼎捷 MACP 协议你怎么理解"等），按面试反馈迭代
+- §1 FAQ 还可以加 Q7-Q10（如"配置项之间冲突你怎么处理"、"B 端 SaaS 多智能体协同协议你怎么理解"等），按评审反馈迭代
 - §2 真 LLM 接入的工程实现属于 P2 增强项，Phase 1/2 完成后再做
-- §3 演示节奏中的"信号-动作"映射表可以在多次模拟面试后再修订
+- §3 演示节奏中的"信号-动作"映射表可以在多次模拟演示后再修订
 
 ---
 
 **文档版本**：v1.0
-**用途**：Banner 面试现场备弹 + Claude Code 实现真 LLM 接入时的工程蓝图
+**用途**：Maintainer 演示现场备弹 + Claude Code 实现真 LLM 接入时的工程蓝图
 **最后更新**：2026-05-14

@@ -638,7 +638,7 @@ const hits = MOCK_PURCHASE_ORDERS.filter(po => isHit(po, effectiveConfig.filter)
 
 ### 5.4 化缺陷为卖点：演示讲述要点
 
-`scenarioConfigOverride` 这一层不仅是工程上的解耦，也是面试演示时的"卖点"：
+`scenarioConfigOverride` 这一层不仅是工程上的解耦，也是项目演示时的"卖点"：
 
 > **演示讲述话术**（在 Step 1 触发后可以加一句）："你注意到我没有手动调筛选规则——Agent 启动剧本前**自动判断了演示场景的特点**（要演示业务层自动同意），动态扩展了 `replyStatus` 范围、关闭了延期率过滤。这条覆盖动作在 Trace 里全程可见，演示完后我可以点开 Debug & Eval Tab 给你看。"
 >

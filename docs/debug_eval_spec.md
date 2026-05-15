@@ -1,6 +1,6 @@
 # Debug & Eval 详细规范 v1.1
 
-> 鼎捷面试 Demo 的 Tab 3（Debug & Eval）详细规范。
+> B 端 SaaS 演示 Demo 的 Tab 3（Debug & Eval）详细规范。
 > 用途：作为 Claude Code 实现 Debug & Eval 的精确输入。
 > 文档定位：**可解释性 + 评测（observability + eval）**——是 Agent Console 运行时（runtime）的事后审查位。
 
@@ -8,7 +8,7 @@
 
 ## 0. 文档定位 & 阅读指南
 
-Debug & Eval 是面试 Demo 的**收口位**，承担两个核心任务：
+Debug & Eval 是演示 Demo 的**收口位**，承担两个核心任务：
 
 1. **让 Agent Console 的每条 Trace 都可追溯、可解释**（PD-7「透明」的延伸：不仅运行时透明，事后也可审）
 2. **承接 X4 一键复盘的跳转入口**——让"6 步剧本 → 复盘 → Trace 细节 → 指标 → 回到 Agent Console 查看具体订单"形成完整闭环
@@ -235,7 +235,7 @@ trace-024  config-change   Step 5   +Qms     ConfigChangeTrace(scope='thisRunOnl
 | 完整走完含 4 次人工决策 + 走 Step 5 调参 | 24 |
 | 重置 → 重新启动 → 走到 Step 2 结束 | 12（intent + config + 10 filter）|
 
-### 3.8 面试讲点
+### 3.8 演示讲点
 
 > 时间线按 step 分组是"产品视角默认"，按 type + 订单 filter 是"工程视角辅助"——两个视角并存的设计是 B 端 observability tool 的核心。**B 端运维工程师看 trace 不是只看"时间发生了什么"，更看"哪个业务步骤"和"哪条订单"的横切面**。把 trace 按业务 step 分组 + 同时支持订单维度过滤，是把"工程视角"翻译成"业务视角"的关键设计。
 
@@ -257,7 +257,7 @@ trace-024  config-change   Step 5   +Qms     ConfigChangeTrace(scope='thisRunOnl
 └─────────────────────────────────────┘
 ```
 
-注：`authorizationResult` 字段一律显示，让面试官看到 RBAC 接口已预留（agent_console_spec §7.3 + §10.1）。
+注：`authorizationResult` 字段一律显示，让评审者看到 RBAC 接口已预留（agent_console_spec §7.3 + §10.1）。
 
 ### 4.2 Input / Output 区
 
@@ -324,7 +324,7 @@ trace-024  config-change   Step 5   +Qms     ConfigChangeTrace(scope='thisRunOnl
 └─────────────────────────────────────┘
 ```
 
-### 4.5 面试讲点
+### 4.5 演示讲点
 
 > Trace 详情用 discriminated union 渲染——同样的 schema 反向用于 UI 模板。**Trace schema 不仅是后端契约，也是前端组件的 props 类型。这种"schema-driven UI"是 B 端运维工具的核心模式**。
 
@@ -352,7 +352,7 @@ trace-024  config-change   Step 5   +Qms     ConfigChangeTrace(scope='thisRunOnl
 
 > ⚠️ **selectMetrics 返回新对象 → 使用时必须 `useShallow(selectMetrics)`**（CLAUDE.md §5.5）
 
-### 5.2 指标选择理由（应对面试官追问）
+### 5.2 指标选择理由（应对评审者追问）
 
 为什么选这 8 个？
 
@@ -405,14 +405,14 @@ trace-024  config-change   Step 5   +Qms     ConfigChangeTrace(scope='thisRunOnl
 
 **重要**：状态信号本身不标"示意" —— 因为 actual 是真实计算、target 是声明的（已标示意）、二者关系是"事实判断"。但 **target 的合理性**是 PD-6 示意 —— 这一点在卡片底部的注脚里说明。
 
-### 5.5 面试讲点
+### 5.5 演示讲点
 
-> actual 是真的，target 是示意，二者并排让面试官看到两个东西：
+> actual 是真的，target 是示意，二者并排让评审者看到两个东西：
 >
 > 1. **指标体系本身的设计**——选哪 8 个、为什么不选别的（§5.2 已备）
 > 2. **诚实但不空洞**——actual 真实计算、target 标 PD-6，没有混用造成"看似有评测其实没有"的错觉
 >
-> 如果面试官问"target 哪来的"，回答：「ISV 调研访谈 + Coze / Dify 等类似产品 baseline + 平台 SLA 假设。生产版本要做 50+ ISV 的 baseline 实测，target 才能从'示意'升'共识'。」
+> 如果评审者问"target 哪来的"，回答：「ISV 调研访谈 + Coze / Dify 等类似产品 baseline + 平台 SLA 假设。生产版本要做 50+ ISV 的 baseline 实测，target 才能从'示意'升'共识'。」
 
 ---
 
@@ -483,9 +483,9 @@ OrderTable 组件检查 `highlightedOrderId === order.id`，true 时加 `ring-2 
 
 3 秒后由 setTimeout 调 `setHighlightedOrder(null)` 自动清除。
 
-### 6.5 面试讲点
+### 6.5 演示讲点
 
-> 三个 Tab 不是孤岛——X4 复盘按钮天然把面试官从 Agent Console 引到 Debug & Eval；DE 的「在 Agent Console 查看此订单」反向回去 + 自动滚动高亮，让面试官**视觉感知到"trace 不是死数据，是 runtime 状态的另一张脸"**。这种**故事性闭环**比单点功能完整度更能讲清楚"平台 PM 视角"。
+> 三个 Tab 不是孤岛——X4 复盘按钮天然把评审者从 Agent Console 引到 Debug & Eval；DE 的「在 Agent Console 查看此订单」反向回去 + 自动滚动高亮，让评审者**视觉感知到"trace 不是死数据，是 runtime 状态的另一张脸"**。这种**故事性闭环**比单点功能完整度更能讲清楚"平台 PM 视角"。
 
 ---
 
@@ -647,13 +647,13 @@ export function filterTraces(
 - [ ] X4 复盘 Modal 的「跳转 Debug & Eval」按钮可点 + 跳过去后自动选中 trace-001
 - [ ] 走 Step 5 调参（persist=true）→ Debug Tab 看到 **24 条**（多 1 条 ConfigChangeTrace scope='persist'）+ 切 Skill Builder Tab 看到业务层延期阈值已改
 
-如果这 12 步能完整走通，Debug & Eval Tab 的面试演示就成立了。
+如果这 12 步能完整走通，Debug & Eval Tab 的项目演示就成立了。
 
 ---
 
-## 10. Mock 数据 vs 生产环境差异（应对面试官追问）
+## 10. Mock 数据 vs 生产环境差异（应对评审者追问）
 
-如果面试官问"上生产数据后这个 Tab 要改什么"，以下是预备答案：
+如果评审者问"上生产数据后这个 Tab 要改什么"，以下是预备答案：
 
 | 维度 | Mock（当前）| 生产 |
 |---|---|---|
@@ -665,7 +665,7 @@ export function filterTraces(
 | **跨剧本对比** | 不支持（单 session）| Debug Tab 加"场景对比"视图（剧本 A vs B 的指标 delta）|
 | **告警** | 无 | 指标 🔴 状态 → 触发告警 webhook（Slack / 钉钉）|
 
-> 这些差异写进 spec 不是"为 v2 留路"，是**应对面试官追问的预备答案**。Banner 演示时不会主动提，但被问到时能马上对答。
+> 这些差异写进 spec 不是"为 v2 留路"，是**应对评审者追问的预备答案**。Maintainer 演示时不会主动提，但被问到时能马上对答。
 
 ---
 
