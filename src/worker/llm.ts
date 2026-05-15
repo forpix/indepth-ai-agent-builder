@@ -34,10 +34,11 @@ interface EndpointQuota {
 }
 
 const ENDPOINT_QUOTAS: Record<EndpointId, EndpointQuota> = {
-  'risk-judge': { maxInputBytes: 16_000, maxOutputTokens: 500 },
-  'orchestrate-call': { maxInputBytes: 12_800, maxOutputTokens: 400 },
-  'answer-question': { maxInputBytes: 19_200, maxOutputTokens: 500 },
-  'parse-config-intent': { maxInputBytes: 12_800, maxOutputTokens: 300 },
+  'risk-judge': { maxInputBytes: 16_000, maxOutputTokens: 700 },
+  'orchestrate-call': { maxInputBytes: 12_800, maxOutputTokens: 500 },
+  // 中文 1 char ≈ 1.5-2 tokens；解释 + citedRules 容易超 500 token 被截断 → JSON 失败
+  'answer-question': { maxInputBytes: 19_200, maxOutputTokens: 900 },
+  'parse-config-intent': { maxInputBytes: 12_800, maxOutputTokens: 400 },
 };
 
 // ─── 顶层 handler ─────────────────────────────────────
@@ -94,6 +95,10 @@ export async function handleLlmRequest(
     // 7. 解析 LLM 输出 + 校验
     const validated = validateResponse(endpoint, llmResponse);
     if (validated === null) {
+      // 写到 wrangler tail 方便诊断（前端只能看到 reason，无法看到 raw 内容）
+      console.error(
+        `[llm_output_invalid] ${endpoint} raw=${llmResponse.slice(0, 600)}`,
+      );
       return jsonError(502, 'llm_output_invalid');
     }
 
@@ -212,16 +217,18 @@ const SYSTEM_PROMPTS: Record<EndpointId, string> = {
 
   'answer-question': `你是采购协同 Agent 的对话模块。采购员对某条订单的处理结果提出疑问，你需要解释。
 
-输出 JSON：
+**严格只输出 JSON 对象，不要包裹 markdown、不要前后加任何文字**。字段名必须**完全**使用以下英文驼峰键，不能用 snake_case 或中文：
+
 {
-  "explanation": string,
-  "citedRules": string[]
+  "explanation": "<中文解释，120-220 字。引用具体规则路径>",
+  "citedRules": ["safety.critical", "business.autoApproveIfDelayLE"]
 }
 
 解释原则：
-- 引用具体规则路径（如 "safety.critical" / "business.autoApproveIfDelayLE"），不要泛泛而谈
+- 引用具体规则路径（如 "safety.critical" / "business.autoApproveIfDelayLE"），citedRules 必须是字符串数组（即使只有一条也要包数组）
 - 业务层延期阈值只看事实延期（supplierDelayReply），与供应商等级无关——这是常见误解，必须说清
 - 安全层覆盖业务层时必须明说"被安全层覆盖"，并说明触发了哪条安全层硬规则
+- explanation 控制在 220 字以内，避免被 token 上限截断
 - 不要承诺无法兑现的事（如"我帮你改" / "我已记录"）`,
 
   'parse-config-intent': `你是采购协同 Agent 的配置编辑助手。采购员用自然语言请求修改 Skill 配置，你需要解析为结构化 action。
@@ -303,12 +310,19 @@ function validateOrchestrate(o: object): boolean {
 
 function validateAnswerQuestion(o: object): boolean {
   const x = o as Record<string, unknown>;
-  return (
-    typeof x.explanation === 'string' &&
-    x.explanation.length > 0 &&
-    Array.isArray(x.citedRules) &&
-    x.citedRules.every((s) => typeof s === 'string')
-  );
+  if (typeof x.explanation !== 'string' || x.explanation.length === 0)
+    return false;
+  // 兼容 LLM 偶尔返回 snake_case；就地 normalize 到 citedRules
+  if (x.citedRules === undefined && Array.isArray(x.cited_rules)) {
+    x.citedRules = x.cited_rules;
+  }
+  // citedRules 缺失 → 用 [] 兜底（不该让"没列规则"导致整条 fallback）
+  if (x.citedRules === undefined) {
+    x.citedRules = [];
+    return true;
+  }
+  if (!Array.isArray(x.citedRules)) return false;
+  return x.citedRules.every((s) => typeof s === 'string');
 }
 
 function validateParseConfig(o: object): boolean {
