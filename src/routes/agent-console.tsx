@@ -1,6 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router';
 
 import { ThreeColumnLayout } from '@/components/layout/three-column-layout';
+import { BottomStatusBar } from '@/components/agent-console/bottom-status-bar';
+import { ConversationPanel } from '@/components/agent-console/conversation-panel';
+import { D7MiniSkillBuilder } from '@/components/agent-console/d7-mini-skill-builder';
+import { DecisionPanel } from '@/components/agent-console/decision-panel';
+import { DecisionToast } from '@/components/agent-console/decision-toast';
+import { LlmErrorToast } from '@/components/agent-console/llm-error-toast';
+import { MockCursor } from '@/components/agent-console/mock-cursor';
+import { OrderTable } from '@/components/agent-console/order-table';
+import { ReviewModal } from '@/components/agent-console/review-modal';
+import { ScenarioHeader } from '@/components/agent-console/scenario-header';
 
 export const Route = createFileRoute('/agent-console')({
   component: AgentConsolePage,
@@ -8,42 +18,24 @@ export const Route = createFileRoute('/agent-console')({
 
 function AgentConsolePage() {
   return (
-    <ThreeColumnLayout
-      left={
-        <PlaceholderColumn
-          title="对话面板"
-          description="Agent 与采购员的对话流，按 3 步固定剧本演示。Phase 2 实现。"
+    <div className="flex h-full flex-col">
+      <ScenarioHeader />
+      <div className="min-h-0 flex-1 overflow-hidden">
+        <ThreeColumnLayout
+          left={<ConversationPanel />}
+          center={<OrderTable />}
+          right={<DecisionPanel />}
+          leftWidth={320}
         />
-      }
-      center={
-        <PlaceholderColumn
-          title="订单表"
-          description="10 条 mock 采购订单，覆盖普通跟催 / 高风险 / 二次跟催 / 单一来源等样本组合。"
-        />
-      }
-      right={
-        <PlaceholderColumn
-          title="决策面板"
-          description="展示 Agent 的意图、参数、Memory（PD-7：必须透明）。关键动作需人工确认（PD-8）。"
-        />
-      }
-    />
-  );
-}
-
-function PlaceholderColumn({
-  title,
-  description,
-}: {
-  title: string;
-  description: string;
-}) {
-  return (
-    <div className="flex h-full flex-col p-6">
-      <h3 className="text-[14px] font-semibold">{title}</h3>
-      <div className="mt-3 flex-1 rounded-lg border border-dashed border-border bg-surface p-6">
-        <div className="text-[12px] text-muted">{description}</div>
       </div>
+      <BottomStatusBar />
+
+      {/* 全局覆盖层 */}
+      <DecisionToast />
+      <LlmErrorToast />
+      <D7MiniSkillBuilder />
+      <MockCursor />
+      <ReviewModal />
     </div>
   );
 }
