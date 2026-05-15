@@ -742,7 +742,9 @@ const humanDecisionScript = [
 
 ## 10. 数据流出 → Debug & Eval
 
-剧本运行过程中产生的所有事件写入 `evalStore`，供 Debug & Eval Tab 使用：
+剧本运行过程中产生的所有事件写入 **`useScenarioStore.traces`**，供 Debug & Eval Tab 直接读取。
+
+> ⚠️ **数据源修订**（2026-05-15）：spec v1.0 设计为写入独立的 `evalStore`，但 Phase 2 实装时为简化跨 store 通信，trace 直接落到 `scenario-store.traces`。Debug & Eval Tab（`docs/debug_eval_spec.md` v1.1）已对齐此设计。Phase 4 之后接入真 LLM / 多场景对比时再迁移到独立 `evalStore`。
 
 ### 10.1 Trace 日志结构（P0-6 类型契约）
 
@@ -884,8 +886,7 @@ const MOCK_COMPLETENESS_ALERT_RESPONSE: CompletenessAlertResponse = {
 - Step 2 扫描时写 10 条 `FilterTrace`（每个订单一条，含命中或被哪条规则筛掉）
 - Step 3 对每条命中订单写 `RiskTrace`（含 safetyBlocked / autoApproved 决策）
 - Step 3 调用子 Skill 写 `CallSkillTrace`（含完整 request/response，失败时写 error）
-- Step 5 用户/LLM 调参写 `ConfigChangeTrace(scope='thisRunOnly')`（含 path、旧值、新值、影响的订单 ID）
-- 用户在 D7 卡片勾选"永久保存"后再写 `ConfigChangeTrace(scope='persist')`
+- Step 5 用户/LLM 调参写 **一条** `ConfigChangeTrace`（含 path、旧值、新值、影响的订单 ID）；`scope` 字段二选一：D7 卡默认勾"仅本次剧本生效" → `scope='thisRunOnly'`，用户改勾"永久保存到 Skill 配置" → `scope='persist'`（同时实装代码会同步 update `useSkillStore.config`）。**不是写两条**
 - 每次人工确认（伪光标或真实点击）写 `HumanDecisionTrace`（`clickedBy` 字段区分来源）
 
 ### 10.4 面试讲点
@@ -941,7 +942,7 @@ interface ScenarioState {
 | **B3** | **重跑只重置最后一次扫描结果**，不清空 traces | Step 5 调参后的自动重跑（§3.6）只回滚 PO 状态和重新跑 Step 2-3，**保留前面的 traces**——这是 Trace "可追溯" 的硬要求，Debug 时能看到"调参前后"的对比。 |
 | **B4** | **演示模式异常时 fallback 到手动模式** | timer 异常、伪光标失败、LLM 调用超时 等任何运行时错误 → 切到 `ScenarioStep` 的当前步 + `isAutoPlaying=false`，等待用户手动推进。**严禁**整个 demo 卡死。 |
 
-**完整状态转移表（事件、guard、side effects、idempotency）不在 spec 范围内**——这是 Claude Code 工程实现时的细节决定，但任何实现都必须满足上述 4 条 B1-B4 行为。验证方式：写 4 个最小单测（不计入 PD"不做单测"约束，这是状态机的契约验证）。
+**完整状态转移表（事件、guard、side effects、idempotency）不在 spec 范围内**——这是 Claude Code 工程实现时的细节决定，但任何实现都必须满足上述 4 条 B1-B4 行为。**验证方式：人工走查 §13 验收清单**（与 CLAUDE.md §5.4 + `docs/debug_eval_spec.md` §2 一致，**不做任何形式的单元测试**，包括"契约护栏"。早期 spec v1.0 曾建议写 4 个最小单测，已废弃）。
 
 ### 11.2 动画时序常量
 
