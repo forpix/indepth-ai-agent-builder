@@ -233,6 +233,36 @@ type MaterialCriticalFilter = 'yes' | 'no' | 'any';
 - 不要为了"扩展性"加抽象层——这是 demo，所有抽象必须服务当前演示需求
 - 不要做单元测试——demo 不需要，时间用在 UI 打磨上更值
 
+### 5.5 工程硬约束（踩过坑、写下来防再犯）
+
+- **zustand selector 返回对象/数组时必须包 `useShallow`**：
+
+  ```typescript
+  // ❌ 错误：返回新对象字面量 + zustand v5 默认 Object.is 比较 + StrictMode 双触发 → 初次挂载死循环
+  const hud = useScenarioStore(selectHud);
+
+  // ✅ 正确（只对"扁平对象 / 原始值数组"有效）
+  import { useShallow } from 'zustand/react/shallow';
+  const hud = useScenarioStore(useShallow(selectHud));
+  ```
+
+  规则：selector 返回**字段直访**（如 `(s) => s.currentStep`）可以裸用；返回**新构造的扁平对象/数组**（如 `selectHud` 算出 `{ totalTokens, cost }`）必须 `useShallow`。
+
+- **嵌套对象 selector 用 `useShallow` 仍然会死循环** —— `useShallow` 只做一层浅比较，selector 返回 `{ hitRate: { actual, target }, ... }` 这种嵌套结构时，每个内层对象 ref 每次都变，`Object.is(prev.hitRate, next.hitRate)` 仍是 false → 循环。
+
+  ```typescript
+  // ❌ 错误：selectMetrics 返回 8 个嵌套 Metric struct，useShallow 拦不住
+  const metrics = useScenarioStore(useShallow(selectMetrics));
+
+  // ✅ 正确：在组件里 useMemo 用稳定 ref 作 dep
+  const traces = useScenarioStore((s) => s.traces);  // 字段直访，稳定
+  const metrics = useMemo(() => selectMetrics({ traces } as never), [traces]);
+  ```
+
+  判断：如果 selector 返回的对象**有嵌套字段且每次重新构造**，必须走 useMemo + 稳定 dep 的模式，不能依赖 useShallow。
+
+- **type check 必须用 `npm run typecheck`（= `tsc -b --noEmit`），不能裸跑 `tsc --noEmit`**：根 `tsconfig.json` 用了 project references，没 `-b` 时只检查根项目而跳过 `tsconfig.app.json`，会漏掉所有真实错误。
+
 ---
 
 ## 6. 当前阶段优先级
@@ -323,8 +353,8 @@ Debug & Eval 展示 trace 和指标
 **共享状态原则**：
 
 - 配置类数据（Skill 配置）放 `skillStore`
-- 运行时数据（对话、订单、决策）放 `agentStore`
-- 指标和 Trace 放 `evalStore`
+- 运行时数据（对话、订单、决策、Trace、autoPlay 状态）放 `scenarioStore`（Phase 2 实装时合并了原计划的 `agentStore`）
+- ~~指标和 Trace 放 `evalStore`~~ —— Phase 2/3 实装时 trace 直接落 `scenarioStore.traces`，`evalStore` 留作 Phase 4 之后接真 LLM / 多场景对比时的迁移目标
 - **不要**用一个超大的 global store
 
 ---
